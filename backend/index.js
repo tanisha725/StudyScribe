@@ -56,18 +56,32 @@ function cleanText(text) {
     .replace(/\s+/g, " ")
     .trim();
 }
-
-/* ---------- GROQ ---------- */
 async function askGroq(prompt) {
+
+  const model = "llama-3.3-70b-versatile";
+
+  console.log("🔥 ACTUAL GROQ MODEL:", model);
+
   const res = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant",
+
+    model: model,
+
     max_tokens: 3000,
+
     temperature: 0.4,
-    messages: [{ role: "user", content: prompt }],
+
+    messages: [
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+
   });
 
   return res.choices[0].message.content;
 }
+/* ---------- GROQ ---------- */
 
 /* ---------- TEXT EXTRACTION ---------- */
 async function extractText(file) {
