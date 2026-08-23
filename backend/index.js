@@ -58,7 +58,7 @@ function cleanText(text) {
 }
 async function askGroq(prompt) {
 
-  const model = "llama-3.3-70b-versatile";
+  const model = "openai/gpt-oss-120b";
 
   console.log("🔥 ACTUAL GROQ MODEL:", model);
 
