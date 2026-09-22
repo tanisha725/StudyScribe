@@ -140,11 +140,8 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="hero-row">
-        <div>
-          <h1 className="title">StudyScribe ✨</h1>
-          <p className="hero-copy">Upload any document or audio file and get premium study notes, flashcards, and quizzes.</p>
-        </div>
+      <header className="topbar">
+        <div className="brand-lockup"><span className="brand-mark">S</span><span>StudyScribe</span></div>
         <button
           className="app-button secondary-button logout-button"
           onClick={() => {
@@ -152,26 +149,26 @@ export default function App() {
             setLoggedIn(false);
           }}
         >
-          Logout
+          <span className="button-icon">↪</span> Log out
         </button>
-      </div>
+      </header>
 
-      <div className="upload-box">
+      <main>
+        <section className="home-hero">
+          <div><span className="eyebrow">AI study workspace</span><h1 className="title">Learn from your<br /><em>source material.</em></h1><p className="hero-copy">Drop in a lecture, chapter, or recording. StudyScribe turns it into a focused set of notes, flashcards, and questions.</p></div>
+          <div className="hero-stamp"><span>⌁</span><strong>01</strong><small>UPLOAD<br />TO LEARN</small></div>
+        </section>
+
+      <section className="upload-box">
+        <div className="upload-heading"><div><span className="section-kicker">Create a study set</span><h2>What are you working on?</h2></div><span className="secure-note">✦ AI-powered</span></div>
+        <div className="upload-dropzone"><div className="upload-icon">↑</div><div><strong>{file ? file.name : "Choose a file to get started"}</strong><span>Drag and drop or browse from your device</span></div><label className="browse-button">Browse<input type="file" accept=".pdf,.ppt,.pptx,.txt,.mp3,.wav,.m4a,.ogg" onChange={(e) => setFile(e.target.files[0])} /></label></div>
         <div className="input-group">
-          <label className="file-label">
-            <span>{file ? file.name : "Choose a file to upload"}</span>
-            <input
-              type="file"
-              accept=".pdf,.ppt,.pptx,.txt,.mp3,.wav,.m4a,.ogg"
-              onChange={(e) => setFile(e.target.files[0])}
-            />
-          </label>
-
           <button className="app-button primary-button" onClick={handleUpload}>
-            Generate Notes
+            Generate my study set <span className="button-arrow">→</span>
           </button>
         </div>
-      </div>
+        <div className="upload-meta"><span>Supported formats</span><strong>PDF · PPT · PPTX · TXT · MP3 · WAV · M4A · OGG</strong><span className="size-note">Max 25 MB</span></div>
+      </section>
 
       {errorMessage && <div className="error-banner">{errorMessage}</div>}
 
@@ -209,6 +206,7 @@ export default function App() {
 
       {data && Object.keys(data).length > 0 && (
         <>
+          <div className="results-heading"><div><span className="section-kicker">Your study set</span><h2>Ready when you are.</h2></div><span className="result-count">4 learning tools</span></div>
           <div className="tabs">
             {["summary", "notes", "flashcards", "quiz"].map((t) => (
               <button
@@ -367,6 +365,7 @@ export default function App() {
           </div>
         </>
       )}
+      </main>
     </div>
   );
 }
