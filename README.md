@@ -18,6 +18,8 @@ This repository is being extended into **StudyScribe 2.0**, an adaptive learning
 | Quiz | Multiple-choice questions at three difficulty levels, each tagged with the concept it tests. 10-minute timer, score by difficulty, retake |
 | Mistake analysis | After submitting, each wrong answer gets an explanation and a cautious "possible cause", and the weak concepts are listed |
 | Adaptive practice | "Practice weak concepts" writes new questions on the concepts you missed. "More questions" get harder or easier depending on your last score |
+| Dashboard | A home screen with the current study set (counts of concepts, notes, flashcards and questions), shortcuts to every tool, and this session's quiz results with the concepts to focus on |
+| Sidebar | Every tool in one left-hand menu. Tools unlock once a file is uploaded. On a phone the menu becomes a scrolling bar at the top |
 | Sign in | A simple sign-up and login screen (browser-only, see limitations) |
 
 ## Tech stack
@@ -49,7 +51,7 @@ StudyScribe/
 │   ├── .env.example      Template for the keys you need
 │   └── package.json
 ├── frontend/
-│   ├── src/App.js        Main screen: upload, tabs, topics, tutor, flashcards
+│   ├── src/App.js        Sidebar, dashboard, upload, summary, notes, topics, tutor, flashcards
 │   ├── src/Quiz.js       Quiz, mistake review and practice rounds
 │   ├── src/Auth.js       Sign-up and login screen
 │   ├── src/App.css       All styling
@@ -92,7 +94,7 @@ The app opens at http://localhost:3000.
 
 ```bash
 cd backend && npm test      # 36 tests, no API key needed
-cd frontend && npm test     # 8 tests
+cd frontend && npm test     # 10 tests
 ```
 
 ## Environment variables

@@ -80,13 +80,13 @@ There is no database. Uploaded documents are held in the server's memory.
 | `backend/package.json` | Backend libraries |
 | `backend/.env.example` | Template listing the keys the backend needs |
 | `backend/tmp_*.js` | Four leftover experiment scripts. Not used by the app. Three contain a hardcoded token (see section 7) |
-| `frontend/src/App.js` | Main screen: upload box, progress popup, the six tabs, and the `Tutor`, `KnowledgeMap` and `FlipCard` components |
+| `frontend/src/App.js` | The page layout (sidebar and dashboard), upload box, progress popup, and the `Tutor`, `KnowledgeMap`, `RichText` and `FlipCard` components |
 | `frontend/src/Quiz.js` | The quiz: answering, timer, score, mistake review, practice rounds |
 | `frontend/src/config.js` | The backend address |
 | `frontend/src/Auth.js` | Sign-up and login screen |
 | `frontend/src/App.css` | All styling |
 | `frontend/src/index.js` | Starts React |
-| `frontend/src/App.test.js` | Eight tests covering the sign-in screen, the upload screen, file checks, and the Topics, Tutor and Quiz tabs |
+| `frontend/src/App.test.js` | Ten tests covering sign-in, the dashboard, file checks, the summary, and the Topics, Tutor and Quiz views |
 | `frontend/.env.example` | Template for the backend address the frontend should call |
 | `frontend/README.md` | The default Create React App readme |
 | `package.json` (root) | Lists five libraries the backend already lists. Not used by anything |
@@ -193,6 +193,23 @@ This rule exists because the first real test labelled five out of five single mi
 
 In both cases the code decides *what* to ask about and *how hard*; the LLM only writes the questions.
 
+### Layout
+
+The screen is a sidebar plus a main area. The sidebar lists every view: **Dashboard**, then the study tools (Summary, Notes, Topics, Tutor, Flashcards, Quiz). The list lives in one array, `VIEWS`, in `App.js`, so adding a tool means adding one entry. The study tools stay disabled until a file has been uploaded.
+
+The **dashboard** changes with the situation:
+
+- **Before any upload** it leads with the welcome banner and the upload box.
+- **After an upload** it leads with the current study set (number of concepts, notes, flashcards and questions, and how much of the file was analysed), then shortcuts to each tool, then this session's quiz results, with the upload box moved to the end.
+
+Quiz results reach the dashboard through an `onResult` callback that `Quiz.js` calls after each submitted attempt. They are kept in React state only, so the dashboard labels them "Not saved yet".
+
+The Tutor and Quiz views stay on the page, hidden, while you look at other views, so a conversation or a half-finished quiz is not lost.
+
+AI text in the summary and notes often contains Markdown bold (`**term**`). `RichText` turns it into real bold text and splits a long block into paragraphs. It builds React elements rather than inserting HTML, so text from the AI cannot add markup to the page.
+
+On screens narrower than 860px the sidebar becomes a bar across the top with a horizontally scrolling menu. An existing typo (a `+` before the mobile `@media` rule) had stopped the phone styles from ever applying; it is fixed.
+
 ### Authentication
 
 `Auth.js` saves `{ email, password }` in the browser's `localStorage` on sign-up, and compares against it on login. A `loggedIn` flag in `localStorage` decides whether to show the app. The backend is not involved at all.
@@ -260,7 +277,7 @@ The frontend reads the backend address from `REACT_APP_API_URL` and falls back t
 8. **Groq's free limit is 8,000 tokens per minute per model.** One upload uses most of that, so several uploads in a row can hit the rate limit.
 9. **A mistake's cause is a guess from limited evidence.** Most single mistakes come back as "knowledge gap", the model's default. The analysis was checked by hand on one test quiz, not measured against real students. At most 8 mistakes are analysed per quiz.
 10. **Adaptation only uses the current quiz**, because results are not stored yet. (Phase 5)
-11. **The upload box says "Drag and drop"** but only the Browse button works.
+11. **Uploading is by the Browse button only.** The upload box no longer claims drag and drop works.
 
 ## 8. What can be reused for StudyScribe 2.0
 

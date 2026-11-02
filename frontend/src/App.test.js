@@ -1,8 +1,15 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import axios from 'axios';
 import App from './App';
 
 jest.mock('axios');
+
+// Sidebar tools unlock once the upload has finished
+const openView = async (name) => {
+  const button = screen.getByRole('button', { name });
+  await waitFor(() => expect(button).toBeEnabled());
+  fireEvent.click(button);
+};
 
 test('shows the sign-in screen when nobody is logged in', () => {
   localStorage.clear();
@@ -51,7 +58,7 @@ test('shows topics, concepts and their sources after an upload', async () => {
   fireEvent.change(container.querySelector('input[type="file"]'), { target: { files: [file] } });
   fireEvent.click(screen.getByText(/generate my study set/i));
 
-  fireEvent.click(await screen.findByText('TOPICS'));
+  await openView('Topics');
   expect(screen.getByText('Binary tree')).toBeInTheDocument();
   expect(screen.getByText('Page 2')).toBeInTheDocument();
   expect(screen.getByText(/A family tree/)).toBeInTheDocument();
@@ -79,7 +86,7 @@ test('tutor shows an answer with its source and sends the conversation with a fo
   const file = new File(['content'], 'lecture.pdf');
   fireEvent.change(container.querySelector('input[type="file"]'), { target: { files: [file] } });
   fireEvent.click(screen.getByText(/generate my study set/i));
-  fireEvent.click(await screen.findByText('TUTOR'));
+  await openView('Tutor');
 
   axios.post.mockResolvedValueOnce({
     data: { answer: 'Thrashing is constant page swapping.', found: true, sources: [{ source: 'Page 4', excerpt: 'Thrashing happens when' }] },
@@ -119,7 +126,7 @@ test('quiz explains a wrong answer, suggests a cause, and offers practice on wea
   const { container } = render(<App />);
   fireEvent.change(container.querySelector('input[type="file"]'), { target: { files: [new File(['x'], 'lecture.pdf')] } });
   fireEvent.click(screen.getByText(/generate my study set/i));
-  fireEvent.click(await screen.findByText('QUIZ'));
+  await openView('Quiz');
 
   expect(screen.getByText('easy')).toBeInTheDocument();
   expect(screen.getByText('hard')).toBeInTheDocument();
@@ -168,11 +175,56 @@ test('quiz does not guess a cause when the evidence is unclear', async () => {
   const { container } = render(<App />);
   fireEvent.change(container.querySelector('input[type="file"]'), { target: { files: [new File(['x'], 'lecture.pdf')] } });
   fireEvent.click(screen.getByText(/generate my study set/i));
-  fireEvent.click(await screen.findByText('QUIZ'));
+  await openView('Quiz');
   fireEvent.click(screen.getByText('FCFS'));
 
   axios.post.mockResolvedValueOnce({ data: { analysis: [{ index: 0, explanation: 'FCFS has no quantum.', category: 'unclear', evidence: '', source: '' }], weakConcepts: [] } });
   fireEvent.click(screen.getByText('Submit Quiz'));
 
   expect(await screen.findByText(/one wrong answer is not enough to tell why/)).toBeInTheDocument();
+});
+
+test('dashboard locks the tools until a file is uploaded, then shows the study set and quiz results', async () => {
+  localStorage.setItem('loggedIn', 'true');
+  axios.post.mockReset();
+  render(<App />);
+
+  expect(screen.getByRole('button', { name: 'Quiz' })).toBeDisabled();
+  expect(screen.getByText(/upload a file to unlock/i)).toBeInTheDocument();
+
+  axios.post.mockResolvedValueOnce({
+    data: {
+      docId: 'doc-3', summary: 'The summary text.', notes: ['n1', 'n2'], flashcards: [{ q: 'a', a: 'b' }], warnings: [],
+      knowledge: { topics: [{ name: 'T', subtopics: [], concepts: [{ name: 'C1', definition: 'd', example: '', source: '' }] }], relationships: [], coverage: { percent: 100, sections: 1, firstSource: 'Page 1', lastSource: 'Page 1' } },
+      quiz: [{ q: 'Pick one?', options: ['A', 'B'], answer: 'A', difficulty: 'easy', concept: 'C1', explanation: '' }],
+    },
+  });
+  fireEvent.change(document.querySelector('input[type="file"]'), { target: { files: [new File(['x'], 'chapter.pdf')] } });
+  fireEvent.click(screen.getByText(/generate my study set/i));
+
+  // The summary opens straight after the upload
+  expect(await screen.findByText('The summary text.')).toBeInTheDocument();
+
+  await openView('Quiz');
+  fireEvent.click(screen.getByText('A'));
+  fireEvent.click(screen.getByText('Submit Quiz'));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+  expect(screen.getByRole('heading', { name: 'chapter.pdf' })).toBeInTheDocument();
+  expect(screen.getByText('100% analysed')).toBeInTheDocument();
+  expect(screen.getByText('Your quiz results')).toBeInTheDocument();
+  expect(screen.getByText('1 / 1')).toBeInTheDocument();
+});
+
+test('summary shows AI bold markers as bold text, not symbols', async () => {
+  localStorage.setItem('loggedIn', 'true');
+  axios.post.mockReset();
+  axios.post.mockResolvedValueOnce({ data: { docId: 'd', summary: 'A **process** is a program.', notes: [], flashcards: [], quiz: [], warnings: [], knowledge: null } });
+  render(<App />);
+  fireEvent.change(document.querySelector('input[type="file"]'), { target: { files: [new File(['x'], 'a.pdf')] } });
+  fireEvent.click(screen.getByText(/generate my study set/i));
+
+  const bold = await screen.findByText('process');
+  expect(bold.tagName).toBe('STRONG');
+  expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument();
 });

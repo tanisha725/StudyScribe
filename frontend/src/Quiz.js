@@ -13,7 +13,8 @@ const CAUSE_LABELS = {
 
 const formatTime = (seconds) => `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, "0")}`;
 
-export default function Quiz({ docId, initialQuestions, originalText, conceptNames }) {
+// onResult is called once per submitted attempt, so the dashboard can show this session's results.
+export default function Quiz({ docId, initialQuestions, originalText, conceptNames, onResult }) {
   const [fullQuiz, setFullQuiz] = useState(initialQuestions);
   const [practice, setPractice] = useState(null);   // a practice round on weak concepts, or null
   const [answers, setAnswers] = useState({});
@@ -55,17 +56,22 @@ export default function Quiz({ docId, initialQuestions, originalText, conceptNam
     setLastScore({ correct: score, total: questions.length });
 
     const given = answered();
-    if (!docId || !given.some((item) => item.chosen !== item.answer)) return;
+    const report = (weak) => onResult?.({ correct: score, total: questions.length, practice: Boolean(practice), weakConcepts: weak });
+
+    if (!docId || !given.some((item) => item.chosen !== item.answer)) return report([]);
 
     setBusy("analysis");
+    let weak = [];
     try {
       const res = await axios.post(`${API_URL}/analyze-mistakes`, { docId, answers: given });
       setAnalysis(Object.fromEntries(res.data.analysis.map((item) => [item.index, item])));
       setWeakConcepts(res.data.weakConcepts || []);
+      weak = (res.data.weakConcepts || []).map((concept) => concept.name);
     } catch (err) {
       setMessage(err.response?.data?.error || "Your mistakes could not be analysed. The correct answers are still shown.");
     }
     setBusy(null);
+    report(weak);
   };
 
   // The timer needs the latest submit(), which changes on every render
